@@ -1,5 +1,6 @@
 package com.example.ugd9_f_0115;
 
+import static com.android.volley.Request.Method.DELETE;
 import static com.android.volley.Request.Method.GET;
 
 import android.app.Activity;
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
         rvProduk.setAdapter(adapter);
 
-        //getAllProduk();
+        getAllProduk();
 
     }
 
@@ -109,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == LAUNCH_ADD_ACTIVITY && resultCode == Activity.RESULT_OK)
             getAllProduk();
     }
+
+
 
     private void getAllProduk() {
         srProduk.setRefreshing(true);
@@ -152,7 +155,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void deleteProduk(long id) {
-        // TODO: Tambahkan fungsi untuk menghapus data buku.
+        // semoga work :v
+        setLoading(true);
+        StringRequest stringRequest = new StringRequest(DELETE, ProdukApi.DELETE_URL + id, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Gson gson = new Gson();
+                //MahasiswaResponse produkResponse =
+                ProdukResponse produkResponse =
+                        gson.fromJson(response, ProdukResponse.class);
+                setLoading(false);
+                Toast.makeText(MainActivity.this,
+                        produkResponse.getMessage(), Toast.LENGTH_SHORT).show();
+                getAllProduk();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                setLoading(false);
+                try {
+                    String responseBody = new String(error.networkResponse.data,
+                            StandardCharsets.UTF_8);
+                    JSONObject errors = new JSONObject(responseBody);
+                    Toast.makeText(MainActivity.this,
+                            errors.getString("message"), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Accept", "application/json");
+                return headers;
+            }
+        };
+        queue.add(stringRequest);
     }
 
     // Fungsi ini digunakan menampilkan layout loading
